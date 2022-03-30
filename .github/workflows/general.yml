@@ -16,7 +16,7 @@ jobs:
       - name: Check running containers
         run: docker ps -a
       - name: Check logs
-        run: docker logs backend
+        run: docker logs testdb_postgres
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
