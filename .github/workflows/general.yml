@@ -6,6 +6,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  docker:
+    name: Build docker-compose stack
+      run: docker-compose up -f test_db/docker-compose.yml
   test:
     name: Test
     runs-on: ubuntu-latest
