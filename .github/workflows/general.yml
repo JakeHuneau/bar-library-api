@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build the stack
         run: docker-compose -f test_db/docker-compose.yml up -d
-      -name: Check running containers
+      - name: Check running containers
         run: docker ps -a
-      -name: Check logs
+      - name: Check logs
         run: docker logs backend
       - uses: actions-rs/toolchain@v1
         with:
