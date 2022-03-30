@@ -6,14 +6,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  docker:
-    name: Build docker-compose stack
-      run: docker-compose up -f test_db/docker-compose.yml
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Build the stack
+        run: docker-compose up -f test_db/docker-compose.yml -d
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -69,4 +68,4 @@ jobs:
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          args: '--ignore-tests'
+          args: "--ignore-tests"
