@@ -18,6 +18,8 @@ jobs:
           echo --finished--
           echo Time for ls
           ls
+          ls test_db
+          ls test_db/sql
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
