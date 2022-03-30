@@ -11,4 +11,4 @@ services:
             - POSTGRES_PASSWORD=postgres
             - POSTGRES_DB=test_data
         volumes:
-            - ./sql/:/docker-entrypoint-initdb.d/
+            - /test_db/sql/:/docker-entrypoint-initdb.d/
