@@ -12,5 +12,3 @@ services:
             - POSTGRES_DB=test_data
         volumes:
             - ./sql/:/docker-entrypoint-initdb.d/
-        command: >
-            /bin/bash -c "ls"
