@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build the stack
-        run: docker-compose -f test_db/docker-compose.yml -d up
+        run: docker-compose -f test_db/docker-compose.yml up -d
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
