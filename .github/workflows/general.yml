@@ -12,14 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build the stack
-        run: |
-          echo --starting--
-          docker-compose --debug -f test_db/docker-compose.yml up -d
-          echo --finished--
-          echo Time for ls
-          ls
-          ls test_db
-          ls test_db/sql
+        run: docker-compose -f test_db/docker-compose.yml up -d
+      -name: Check running containers
+        run: docker ps -a
+      -name: Check logs
+        run: docker logs backend
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
