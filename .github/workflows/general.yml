@@ -15,10 +15,8 @@ jobs:
         run: docker build -t test_db test_db
       - name: Build the stack
         run: docker-compose -f test_db/docker-compose.yml up -d
-      - name: Check running containers
-        run: docker ps -a
-      - name: Check logs
-        run: docker logs testdb_postgres
+      - name: Check container
+        run: docker exec -it testdb_postgres "ls"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
