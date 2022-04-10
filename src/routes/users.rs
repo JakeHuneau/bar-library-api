@@ -39,6 +39,7 @@ pub struct DeleteUserData {
     name: String,
 }
 
+/// Adds a new user
 #[tracing::instrument(
     name = "Add user",
     skip(form, pool),
@@ -48,13 +49,32 @@ pub struct DeleteUserData {
     )
 )]
 pub async fn add_user(form: Form<NewUserData>, pool: web::Data<PgPool>) -> HttpResponse {
-    tracing::info!("Attempting to save new user: {}", &form.name);
     match insert_user(&pool, &form).await {
         Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+        Err(e) => match e {
+            sqlx::Error::Database(database_error) => match database_error.code() {
+                // Check for duplicate error
+                Some(code) => match code.to_string().as_str() {
+                    "23505" => {
+                        // Duplicate error
+                        if database_error.message().contains("users_name_key") {
+                            HttpResponse::Conflict().body("username")
+                        } else if database_error.message().contains("users_email_key") {
+                            HttpResponse::Conflict().body("email")
+                        } else {
+                            HttpResponse::Conflict().finish()
+                        }
+                    }
+                    _ => HttpResponse::InternalServerError().finish(),
+                },
+                None => HttpResponse::InternalServerError().finish(),
+            },
+            _ => HttpResponse::InternalServerError().finish(),
+        },
     }
 }
 
+/// Inserts a new user into the database
 #[tracing::instrument(name = "Inserting new user", skip(form, pool))]
 pub async fn insert_user(pool: &PgPool, form: &NewUserData) -> Result<(), sqlx::Error> {
     let hashed_password =
@@ -79,6 +99,7 @@ pub async fn insert_user(pool: &PgPool, form: &NewUserData) -> Result<(), sqlx::
     Ok(())
 }
 
+/// Attempts to sign in a user
 #[tracing::instrument(
     name = "sign user in",
     skip(form, pool),
@@ -124,6 +145,7 @@ pub fn calculate_permission(can_write: i16, can_delete: i16, can_alter_users: i1
     can_write | (2 * can_delete) | (4 * can_alter_users)
 }
 
+/// Attempts to update a user's permissions
 #[tracing::instrument(
     name = "update user permissions"
     skip(form, pool),
@@ -144,6 +166,7 @@ pub async fn update_permissions(
     }
 }
 
+/// Updates a user's permissions in the database
 #[tracing::instrument(name = "Update user permissions in DB", skip(pool, form))]
 pub async fn update_permissions_db(
     pool: &PgPool,
@@ -166,6 +189,7 @@ pub async fn update_permissions_db(
     Ok(())
 }
 
+/// Attempts to update a user's password
 #[tracing::instrument(
     name = "Update user password",
     skip(form, pool),
@@ -190,6 +214,7 @@ pub async fn update_password(
     }
 }
 
+/// Updates a user's password in the databse
 #[tracing::instrument(name = "Update user password in DB", skip(form, pool, new_password))]
 pub async fn update_password_db(
     pool: &PgPool,
@@ -210,6 +235,7 @@ pub async fn update_password_db(
     Ok(())
 }
 
+/// Deletes a user from the database
 #[tracing::instrument(
     name = "Delete user",
     skip(form, pool),

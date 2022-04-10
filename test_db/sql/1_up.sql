@@ -5,7 +5,7 @@ create table ingredients (
 
 create table recipes (
 	id uuid primary key,
-	name text not null,
+	name text not null unique,
 	directions text not null
 );
 
@@ -15,7 +15,7 @@ create table recipe_ingredients (
 	ingredient_id uuid not null,
 	quantity real null,
 	unit text null,
-	required BIT not null
+	required boolean not null
 );
 
 create index ingredient_id on recipe_ingredients (ingredient_id);
