@@ -9,7 +9,7 @@ async fn add_user_returns_a_200_for_valid_form_data() {
 
     let body = "name=test2&email=test2%40gmail.com&password=hash";
     let response = client
-        .post(&format!("{}/add_user", &app.address))
+        .post(&format!("{}/user/add_user", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -29,6 +29,59 @@ async fn add_user_returns_a_200_for_valid_form_data() {
         verify("hash", &saved.password).expect("Failed to verify")
     );
     assert_eq!(saved.email, "test2@gmail.com");
+}
+
+#[tokio::test]
+async fn add_user_fails_if_user_already_exists() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    let saved = sqlx::query!("SELECT name FROM users WHERE name = 'test'",)
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved user");
+
+    assert_eq!(saved.name, "test");
+
+    let body = "name=test&email=test2%40test.com&password=hash";
+    let response = client
+        .post(&format!("{}/user/add_user", &app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    assert_eq!(409, response.status().as_u16());
+    assert_eq!(
+        "username",
+        response.text().await.expect("Could not get text")
+    );
+}
+
+#[tokio::test]
+async fn add_user_fails_if_email_already_exists() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    let saved = sqlx::query!("SELECT email FROM users WHERE name = 'test'",)
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved user");
+
+    assert_eq!(saved.email, "test@test.com");
+
+    let body = "name=test2&email=test%40test.com&password=hash";
+    let response = client
+        .post(&format!("{}/user/add_user", &app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    assert_eq!(409, response.status().as_u16());
+    assert_eq!("email", response.text().await.expect("Could not get text"));
 }
 
 #[tokio::test]
@@ -54,7 +107,7 @@ async fn add_user_returns_a_400_when_data_is_missing() {
 
     for (invalid_body, error_message) in test_cases {
         let response = client
-            .post(&format!("{}/add_user", app.address))
+            .post(&format!("{}/user/add_user", app.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
@@ -77,7 +130,7 @@ async fn user_can_successfully_log_in() {
 
     let body = "name=test&password=password";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -94,7 +147,7 @@ async fn user_with_wrong_password_gets_unauthorized_response() {
 
     let body = "name=test&password=badpassword";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -111,7 +164,7 @@ async fn login_with_nonexistant_username_gets_404() {
 
     let body = "name=doesnotexist&password=password";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -140,7 +193,7 @@ async fn update_permissions_works() {
 
     let body = "name=test&can_write=1&can_delete=1&can_alter_users=1";
     let response = client
-        .post(&format!("{}/update_permissions", &app.address))
+        .post(&format!("{}/user/update_permissions", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -164,7 +217,7 @@ async fn user_can_change_password() {
 
     let body = "name=test&password=password2";
     let response = client
-        .post(&format!("{}/update_password", &app.address))
+        .post(&format!("{}/user/update_password", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -175,7 +228,7 @@ async fn user_can_change_password() {
 
     let body = "name=test&password=password";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -186,7 +239,7 @@ async fn user_can_change_password() {
 
     let body = "name=test&password=password2";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -210,7 +263,7 @@ async fn user_can_be_deleted() {
 
     let body = "name=test";
     let response = client
-        .post(&format!("{}/delete_user", &app.address))
+        .delete(&format!("{}/user/", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -221,7 +274,7 @@ async fn user_can_be_deleted() {
 
     let body = "name=test&password=password";
     let response = client
-        .post(&format!("{}/sign_in", &app.address))
+        .post(&format!("{}/user/sign_in", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
