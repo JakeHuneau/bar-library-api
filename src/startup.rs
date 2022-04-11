@@ -23,7 +23,7 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
             .service(
                 web::scope("/recipe")
                     .route("add_recipe", web::post().to(add_recipe))
-                    .route("/{name}", web::delete().to(delete_recipe))
+                    .route("/", web::delete().to(delete_recipe))
                     .route("/{name}", web::get().to(get_recipe))
                     .route("/", web::post().to(get_recipes)),
             )

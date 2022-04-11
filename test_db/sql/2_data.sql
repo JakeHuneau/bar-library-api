@@ -48,7 +48,9 @@ VALUES
 
 INSERT INTO users (id, name, password, email, permissions, joined_at)
 VALUES
-    ('be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'test', '$2a$12$DG/DRiWKje9XiJf5U0PV8.nKw8gFfRvoOzdN5gqgQOyEThxEnDvw2', 'test@test.com', '0', '2016-03-26 10:10:10-05:00');
+    ('be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'test', '$2a$12$DG/DRiWKje9XiJf5U0PV8.nKw8gFfRvoOzdN5gqgQOyEThxEnDvw2', 'test@test.com', '0', '2016-03-26 10:10:10-05:00'),
+    ('578d366c-55a6-4e62-9167-97bf78315ff4', 'superuser', '$2a$12$DG/DRiWKje9XiJf5U0PV8.nKw8gFfRvoOzdN5gqgQOyEThxEnDvw2', 'test2@test.com', '7', '2016-03-26 10:10:10-05:00');
+
 
 INSERT INTO kitchen (id, user_id, ingredient_id)
 VALUES

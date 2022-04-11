@@ -1,5 +1,5 @@
 use actix_web::web;
-use actix_web::web::Form;
+use actix_web::web::{Form, Json};
 use actix_web::HttpResponse;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
@@ -20,12 +20,13 @@ pub struct LoginData {
     password: Secret<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct UpdatePermissionsData {
-    name: String,
-    can_write: i16,
-    can_delete: i16,
-    can_alter_users: i16,
+    pub referer_id: Uuid,
+    pub name: String,
+    pub can_write: i16,
+    pub can_delete: i16,
+    pub can_alter_users: i16,
 }
 
 #[derive(serde::Deserialize)]
@@ -157,9 +158,17 @@ pub fn calculate_permission(can_write: i16, can_delete: i16, can_alter_users: i1
     )
 )]
 pub async fn update_permissions(
-    form: Form<UpdatePermissionsData>,
+    form: Json<UpdatePermissionsData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
+    // Check user permissions first
+    match user_can_alter_users(&pool, form.referer_id).await {
+        Ok(allowed) => match allowed {
+            true => (),
+            false => return HttpResponse::Forbidden().finish(),
+        },
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
     match update_permissions_db(&pool, &form).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
@@ -187,6 +196,56 @@ pub async fn update_permissions_db(
         e
     })?;
     Ok(())
+}
+
+/// Checks if a user can make new recipes
+#[tracing::instrument(name = "Check if user can write", skip(pool))]
+pub async fn user_can_write(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
+    match get_user_permission(pool, user_id).await {
+        Ok(permissions) => Ok(permissions & 1 == 1),
+        Err(e) => Err(e),
+    }
+}
+
+/// Checks if a user can delete recipes
+#[tracing::instrument(name = "Check if user can delete", skip(pool))]
+pub async fn user_can_delete(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
+    match get_user_permission(pool, user_id).await {
+        Ok(permissions) => Ok(permissions >> 1 & 1 == 1),
+        Err(e) => Err(e),
+    }
+}
+
+/// Checks if a user can alter other user's permissions
+#[tracing::instrument(name = "Check if user can alter users", skip(pool))]
+pub async fn user_can_alter_users(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
+    match get_user_permission(pool, user_id).await {
+        Ok(permissions) => Ok(permissions >> 2 & 1 == 1),
+        Err(e) => Err(e),
+    }
+}
+
+/// Gets a user's permissions from the Database
+#[tracing::instrument(name = "Get user permissions", skip(pool))]
+pub async fn get_user_permission(pool: &PgPool, user_id: Uuid) -> Result<i16, sqlx::Error> {
+    match sqlx::query!(
+        r#"
+        SELECT permissions FROM users WHERE id = $1
+    "#,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await
+    {
+        Ok(result) => match result {
+            None => Ok(0),
+            Some(row) => Ok(row.permissions),
+        },
+        Err(e) => {
+            tracing::error!("Failed to execute query: {}", e);
+            Err(e)
+        }
+    }
 }
 
 /// Attempts to update a user's password

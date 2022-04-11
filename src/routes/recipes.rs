@@ -5,7 +5,8 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use super::{add_ingredients, IngredientData};
+use super::{add_ingredients, IngredientData, user_can_write, user_can_delete};
+
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct RecipeData {
@@ -14,9 +15,16 @@ pub struct RecipeData {
     pub directions: String,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct AddRecipeData {
+    pub referer_id: Uuid,
+    pub recipe: RecipeData
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct DeleteRecipeData {
-    name: String,
+    pub referer_id: Uuid,
+    pub name: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -37,13 +45,21 @@ pub struct GetRecipesFromIngredientsData {
     name = "Adding new recipe",
     skip(pool, form),
     fields(
-        name = %form.name,
-        directions = %form.directions
+        name = %form.recipe.name,
+        directions = %form.recipe.directions
     )
 )]
-pub async fn add_recipe(form: Json<RecipeData>, pool: web::Data<PgPool>) -> HttpResponse {
-    match add_ingredients(&pool, &form.ingredients).await {
-        Ok(ingredient_id_map) => match insert_recipe(&pool, &form).await {
+pub async fn add_recipe(form: Json<AddRecipeData>, pool: web::Data<PgPool>) -> HttpResponse {
+    // Check user permissions first
+    match user_can_write(&pool, form.referer_id).await {
+        Ok(allowed) => match allowed {
+            true => (),
+            false => return HttpResponse::Forbidden().finish(),
+        },
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+    match add_ingredients(&pool, &form.recipe.ingredients).await {
+        Ok(ingredient_id_map) => match insert_recipe(&pool, &form.recipe).await {
             Ok(recipe_id) => {
                 match insert_recipe_ingredients(&pool, &recipe_id, &ingredient_id_map).await {
                     Ok(_) => HttpResponse::Ok().finish(),
@@ -137,7 +153,15 @@ pub async fn insert_recipe_ingredients(
         name = %form.name
     )
 )]
-pub async fn delete_recipe(form: Path<DeleteRecipeData>, pool: web::Data<PgPool>) -> HttpResponse {
+pub async fn delete_recipe(form: Json<DeleteRecipeData>, pool: web::Data<PgPool>) -> HttpResponse {
+    // Check user permissions first
+    match user_can_delete(&pool, form.referer_id).await {
+        Ok(allowed) => match allowed {
+            true => (),
+            false => return HttpResponse::Forbidden().finish(),
+        },
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
     match sqlx::query!(r#"DELETE FROM recipes WHERE name = $1"#, &form.name)
         .execute(pool.get_ref())
         .await

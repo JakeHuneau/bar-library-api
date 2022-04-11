@@ -5,7 +5,16 @@ use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
+use std::str::FromStr;
 use uuid::Uuid;
+
+pub fn get_super_user() -> Uuid {
+    Uuid::from_str("578d366c-55a6-4e62-9167-97bf78315ff4").expect("Could not make UUID")
+}
+
+pub fn get_loser_user() -> Uuid {
+    Uuid::from_str("be1d71f9-cdcd-4ecd-8fab-e799629c14e2").expect("Could not make UUID")
+}
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let default_filter_level = "info".into();
