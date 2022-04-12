@@ -1,5 +1,5 @@
-use crate::helpers::spawn_app;
-use bar_library_api::routes::calculate_permission;
+use crate::helpers::{get_loser_user, get_super_user, spawn_app};
+use bar_library_api::routes::{calculate_permission, UpdatePermissionsData};
 use bcrypt::verify;
 
 #[tokio::test]
@@ -191,10 +191,17 @@ async fn update_permissions_works() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
-    let body = "name=test&can_write=1&can_delete=1&can_alter_users=1";
+    let new_permissions = UpdatePermissionsData {
+        referer_id: get_super_user(),
+        name: String::from("test"),
+        can_write: 1,
+        can_delete: 1,
+        can_alter_users: 1,
+    };
+    let body = serde_json::to_string(&new_permissions).expect("Couldn't make JSON");
     let response = client
         .post(&format!("{}/user/update_permissions", &app.address))
-        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Content-Type", "application/json")
         .body(body)
         .send()
         .await
@@ -208,6 +215,30 @@ async fn update_permissions_works() {
         .expect("Failed to fetch saved user");
 
     assert_eq!(saved.permissions, 7);
+}
+
+#[tokio::test]
+async fn update_permissions_without_permission_gives_403() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    let new_permissions = UpdatePermissionsData {
+        referer_id: get_loser_user(),
+        name: String::from("test"),
+        can_write: 1,
+        can_delete: 1,
+        can_alter_users: 1,
+    };
+    let body = serde_json::to_string(&new_permissions).expect("Couldn't make JSON");
+    let response = client
+        .post(&format!("{}/user/update_permissions", &app.address))
+        .header("Content-Type", "application/json")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    assert_eq!(403, response.status().as_u16());
 }
 
 #[tokio::test]

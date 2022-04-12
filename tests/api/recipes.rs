@@ -1,29 +1,34 @@
-use bar_library_api::routes::{GetRecipesFromIngredientsData, IngredientData, RecipeData};
+use bar_library_api::routes::{
+    AddRecipeData, DeleteRecipeData, GetRecipesFromIngredientsData, IngredientData, RecipeData,
+};
 
-use crate::helpers::spawn_app;
+use crate::helpers::{get_loser_user, get_super_user, spawn_app};
 
 #[tokio::test]
 async fn adding_new_recipe_works() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
-    let recipe = RecipeData {
-        name: String::from("Whiskey and coke"),
-        ingredients: vec![
-            IngredientData {
-                name: String::from("bourbon"),
-                quantity: 1.0,
-                unit: String::from("shot"),
-                required: true,
-            },
-            IngredientData {
-                name: String::from("coke"),
-                quantity: 1.0,
-                unit: String::from("cup"),
-                required: true,
-            },
-        ],
-        directions: String::from("mix em"),
+    let recipe = AddRecipeData {
+        referer_id: get_super_user(),
+        recipe: RecipeData {
+            name: String::from("Whiskey and coke"),
+            ingredients: vec![
+                IngredientData {
+                    name: String::from("bourbon"),
+                    quantity: 1.0,
+                    unit: String::from("shot"),
+                    required: true,
+                },
+                IngredientData {
+                    name: String::from("coke"),
+                    quantity: 1.0,
+                    unit: String::from("cup"),
+                    required: true,
+                },
+            ],
+            directions: String::from("mix em"),
+        },
     };
 
     let body = serde_json::to_string(&recipe).expect("Couldn't make JSON");
@@ -60,27 +65,69 @@ async fn adding_new_recipe_works() {
 }
 
 #[tokio::test]
+async fn adding_new_user_without_permission_gives_403() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    let recipe = AddRecipeData {
+        referer_id: get_loser_user(),
+        recipe: RecipeData {
+            name: String::from("Whiskey and coke"),
+            ingredients: vec![
+                IngredientData {
+                    name: String::from("bourbon"),
+                    quantity: 1.0,
+                    unit: String::from("shot"),
+                    required: true,
+                },
+                IngredientData {
+                    name: String::from("coke"),
+                    quantity: 1.0,
+                    unit: String::from("cup"),
+                    required: true,
+                },
+            ],
+            directions: String::from("mix em"),
+        },
+    };
+
+    let body = serde_json::to_string(&recipe).expect("Couldn't make JSON");
+    let response = client
+        .post(&format!("{}/recipe/add_recipe", &app.address))
+        .header("Content-Type", "application/json")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    assert_eq!(403, response.status().as_u16());
+}
+
+#[tokio::test]
 async fn duplicate_recipe_name_gives_409() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
-    let recipe = RecipeData {
-        name: String::from("old fashioned"),
-        ingredients: vec![
-            IngredientData {
-                name: String::from("bourbon"),
-                quantity: 1.0,
-                unit: String::from("shot"),
-                required: true,
-            },
-            IngredientData {
-                name: String::from("coke"),
-                quantity: 1.0,
-                unit: String::from("cup"),
-                required: true,
-            },
-        ],
-        directions: String::from("mix em"),
+    let recipe = AddRecipeData {
+        referer_id: get_super_user(),
+        recipe: RecipeData {
+            name: String::from("old fashioned"),
+            ingredients: vec![
+                IngredientData {
+                    name: String::from("bourbon"),
+                    quantity: 1.0,
+                    unit: String::from("shot"),
+                    required: true,
+                },
+                IngredientData {
+                    name: String::from("coke"),
+                    quantity: 1.0,
+                    unit: String::from("cup"),
+                    required: true,
+                },
+            ],
+            directions: String::from("mix em"),
+        },
     };
 
     let body = serde_json::to_string(&recipe).expect("Couldn't make JSON");
@@ -100,8 +147,16 @@ async fn delete_recipe_works() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
+    let delete_request = DeleteRecipeData {
+        referer_id: get_super_user(),
+        name: String::from("godfather"),
+    };
+    let body = serde_json::to_string(&delete_request).expect("Couldn't make JSON");
+
     let response = client
-        .delete(&format!("{}/recipe/godfather", &app.address))
+        .delete(&format!("{}/recipe/", &app.address))
+        .header("Content-Type", "application/json")
+        .body(body)
         .send()
         .await
         .expect("Failed to execute request.");
@@ -121,6 +176,28 @@ async fn delete_recipe_works() {
         .expect("Failed to fetch ingredients");
 
     assert_eq!(Some(17), recipe_ing.count);
+}
+
+#[tokio::test]
+async fn delete_recipe_without_permission_gives_403() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    let delete_request = DeleteRecipeData {
+        referer_id: get_loser_user(),
+        name: String::from("godfather"),
+    };
+    let body = serde_json::to_string(&delete_request).expect("Couldn't make JSON");
+
+    let response = client
+        .delete(&format!("{}/recipe/", &app.address))
+        .header("Content-Type", "application/json")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    assert_eq!(403, response.status().as_u16());
 }
 
 #[tokio::test]
