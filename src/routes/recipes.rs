@@ -243,13 +243,6 @@ pub async fn get_recipe_db(
 /// Gets a list of all recipes from the database that include at least all of the given ingredients.
 /// A use case is if a user wants to know all drinks that have vodka and lemon juice for ideas of
 /// what they might want to buy for their bar.
-///
-/// The logic for checking on wildcard can be seen with recipes R1 = [1, 2, 3], R2 = [1, 2], R3 = [1] and requested ingredients I = [1, 2]
-/// If we want to do a wildcard check, then we want any recipe that has at least ingredients 1 and 2.
-/// To check this, we filter the recipes and remove any that doesn't have both 1 and 2.
-/// This is accomplished with I.all(|ing| recipe.contains(ing))
-///
-/// Then, for the exact match without wildcard, we do the opposite and make sure all the required ingredients are searched for.
 #[tracing::instrument(
     name = "Get recipes from ingredients",
     skip(pool, form), 
@@ -264,22 +257,20 @@ pub async fn get_recipes(
     tracing::info!("searching with ingredients {:?}", &form.ingredients);
     match get_potential_recipes(&pool, &form).await {
         Ok(recipes) => {
-            tracing::info!("Recipe count: {}", recipes.len());
             match &form.wildcard {
                 true => HttpResponse::Ok().json(recipes),
                 false => HttpResponse::Ok().json(
                     recipes
                         .into_iter()
                         .filter(|recipe| {
+                            // Get all the required ingredients in the recipe
                             let current_ingredients = recipe
                                 .ingredients
                                 .iter()
                                 .filter(|ingredient| ingredient.required)
                                 .map(|ingredient| ingredient.name.clone())
                                 .collect::<Vec<String>>();
-                            tracing::info!("Current recipe: {:?}", recipe.name);
-                            tracing::info!("Search ingredients: {:?}", &current_ingredients);
-                            tracing::info!("Search ingredients: {:?}", &form.ingredients);
+                            // Check if all the required ingredients are present
                             current_ingredients
                                 .iter()
                                 .all(|ingredient| form.ingredients.contains(ingredient))
