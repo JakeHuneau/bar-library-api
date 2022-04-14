@@ -38,3 +38,12 @@ create table kitchen (
 
 create index kitchen_ingredient_id on kitchen (ingredient_id);
 create index user_id on kitchen (user_id);
+
+create table favorites (
+	id uuid primary key,
+	user_id uuid not null,
+	recipe_id uuid not null
+);
+
+create index favorites_ingredient_id on favorites (recipe_id);
+create index favorites_user_id on favorites (user_id);

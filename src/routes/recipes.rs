@@ -5,8 +5,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use super::{add_ingredients, IngredientData, user_can_write, user_can_delete};
-
+use super::{add_ingredients, user_can_delete, user_can_write, IngredientData};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct RecipeData {
@@ -18,7 +17,7 @@ pub struct RecipeData {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct AddRecipeData {
     pub referer_id: Uuid,
-    pub recipe: RecipeData
+    pub recipe: RecipeData,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -184,23 +183,21 @@ pub async fn delete_recipe(form: Json<DeleteRecipeData>, pool: web::Data<PgPool>
     )
 )]
 pub async fn get_recipe(form: Path<GetRecipeData>, pool: web::Data<PgPool>) -> HttpResponse {
-    match get_recipe_db(&pool, &form.name)
-    .await
-    {
+    match get_recipe_db(&pool, &form.name).await {
         Ok(rows) => match rows {
             None => HttpResponse::NotFound().finish(), // Make sure not empty
             Some(recipe) => HttpResponse::Ok().json(recipe),
         },
-        Err(_) => HttpResponse::InternalServerError().finish()
+        Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
 
 /// Attempts to get a recipe from the database
-#[tracing::instrument(
-    name = "Get recipe Databse",
-    skip(pool)
-)]
-pub async fn get_recipe_db(pool: &PgPool, name: &String) -> Result<Option<RecipeData>, sqlx::Error> {
+#[tracing::instrument(name = "Get recipe Databse", skip(pool))]
+pub async fn get_recipe_db(
+    pool: &PgPool,
+    name: &String,
+) -> Result<Option<RecipeData>, sqlx::Error> {
     let rows = sqlx::query!(
         r#"
         SELECT
@@ -219,38 +216,39 @@ pub async fn get_recipe_db(pool: &PgPool, name: &String) -> Result<Option<Recipe
         &name
     )
     .fetch_all(pool)
-    .await.map_err(|e| {
+    .await
+    .map_err(|e| {
         tracing::error!("Failed to execute query: {}", e);
         e
     })?;
 
     match rows.len() {
-            0 => Ok(None),
-            _ => Ok(Some(RecipeData {
-                name: rows.first().unwrap().recipe_name.clone(),
-                directions: rows.first().unwrap().directions.clone(),
-                ingredients: rows
-                    .iter()
-                    .map(|result| IngredientData {
-                        name: result.ingredient_name.clone(),
-                        quantity: result.quantity.unwrap(),
-                        unit: result.unit.clone().unwrap(),
-                        required: result.required,
-                    })
-                    .collect::<Vec<IngredientData>>(),
-            })),
-        }
+        0 => Ok(None),
+        _ => Ok(Some(RecipeData {
+            name: rows.first().unwrap().recipe_name.clone(),
+            directions: rows.first().unwrap().directions.clone(),
+            ingredients: rows
+                .iter()
+                .map(|result| IngredientData {
+                    name: result.ingredient_name.clone(),
+                    quantity: result.quantity.unwrap(),
+                    unit: result.unit.clone().unwrap(),
+                    required: result.required,
+                })
+                .collect::<Vec<IngredientData>>(),
+        })),
+    }
 }
 
 /// Gets a list of all recipes from the database that include at least all of the given ingredients.
 /// A use case is if a user wants to know all drinks that have vodka and lemon juice for ideas of
 /// what they might want to buy for their bar.
-/// 
+///
 /// The logic for checking on wildcard can be seen with recipes R1 = [1, 2, 3], R2 = [1, 2], R3 = [1] and requested ingredients I = [1, 2]
 /// If we want to do a wildcard check, then we want any recipe that has at least ingredients 1 and 2.
 /// To check this, we filter the recipes and remove any that doesn't have both 1 and 2.
 /// This is accomplished with I.all(|ing| recipe.contains(ing))
-/// 
+///
 /// Then, for the exact match without wildcard, we do the opposite and make sure all the required ingredients are searched for.
 #[tracing::instrument(
     name = "Get recipes from ingredients",
@@ -269,15 +267,27 @@ pub async fn get_recipes(
             tracing::info!("Recipe count: {}", recipes.len());
             match &form.wildcard {
                 true => HttpResponse::Ok().json(recipes),
-                false => HttpResponse::Ok().json(recipes.into_iter().filter(|recipe| {
-                    let current_ingredients = recipe.ingredients.iter().filter(|ingredient| ingredient.required).map(|ingredient| ingredient.name.clone()).collect::<Vec<String>>();
-                    tracing::info!("Current recipe: {:?}", recipe.name);
-                    tracing::info!("Search ingredients: {:?}", &current_ingredients);
-                    tracing::info!("Search ingredients: {:?}", &form.ingredients);
-                    current_ingredients.iter().all(|ingredient| form.ingredients.contains(ingredient))
-                }).collect::<Vec<RecipeData>>()),
+                false => HttpResponse::Ok().json(
+                    recipes
+                        .into_iter()
+                        .filter(|recipe| {
+                            let current_ingredients = recipe
+                                .ingredients
+                                .iter()
+                                .filter(|ingredient| ingredient.required)
+                                .map(|ingredient| ingredient.name.clone())
+                                .collect::<Vec<String>>();
+                            tracing::info!("Current recipe: {:?}", recipe.name);
+                            tracing::info!("Search ingredients: {:?}", &current_ingredients);
+                            tracing::info!("Search ingredients: {:?}", &form.ingredients);
+                            current_ingredients
+                                .iter()
+                                .all(|ingredient| form.ingredients.contains(ingredient))
+                        })
+                        .collect::<Vec<RecipeData>>(),
+                ),
             }
-        },
+        }
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
@@ -301,7 +311,8 @@ pub async fn get_potential_recipes(
             JOIN recipe_ingredients ON recipes.id = recipe_ingredients.recipe_id
             JOIN ingredients ON recipe_ingredients.ingredient_id = ingredients.id
     WHERE ingredients.name = ANY($1)
-    "#, &form.ingredients[..]
+    "#,
+        &form.ingredients[..]
     )
     .fetch_all(pool)
     .await
@@ -311,12 +322,12 @@ pub async fn get_potential_recipes(
     })?;
     let mut recipes: Vec<RecipeData> = vec![];
     for row in rows {
-        match get_recipe_db( pool, &row.name).await {
+        match get_recipe_db(pool, &row.name).await {
             Ok(maybe_recipe) => match maybe_recipe {
                 None => (),
                 Some(recipe) => recipes.push(recipe),
             },
-            Err(e) => return Err(e)
+            Err(e) => return Err(e),
         };
     }
     Ok(recipes)
