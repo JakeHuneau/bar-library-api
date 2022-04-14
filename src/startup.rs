@@ -13,6 +13,11 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
             .route("/health_check", web::get().to(health_check))
             .route("/ingredients", web::get().to(get_all_ingredients))
             .service(
+                web::scope("/favorites")
+                    .route("", web::post().to(add_favorite))
+                    .route("", web::delete().to(remove_favorite)),
+            )
+            .service(
                 web::scope("/user")
                     .route("/add_user", web::post().to(add_user))
                     .route("/sign_in", web::post().to(sign_in))

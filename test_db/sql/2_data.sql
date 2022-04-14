@@ -51,7 +51,6 @@ VALUES
     ('be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'test', '$2a$12$DG/DRiWKje9XiJf5U0PV8.nKw8gFfRvoOzdN5gqgQOyEThxEnDvw2', 'test@test.com', '0', '2016-03-26 10:10:10-05:00'),
     ('578d366c-55a6-4e62-9167-97bf78315ff4', 'superuser', '$2a$12$DG/DRiWKje9XiJf5U0PV8.nKw8gFfRvoOzdN5gqgQOyEThxEnDvw2', 'test2@test.com', '7', '2016-03-26 10:10:10-05:00');
 
-
 INSERT INTO kitchen (id, user_id, ingredient_id)
 VALUES
     ('cd5606dc-255f-47d4-99e9-b08f5c415984', 'be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'b64e1c24-c196-4b62-b7dd-61f49b99d757'),
@@ -60,3 +59,7 @@ VALUES
     ('b1ea938a-3710-4434-89a6-4b6f2e5d2922', 'be1d71f9-cdcd-4ecd-8fab-e799629c14e2', '149d7a96-577c-4993-83e9-3cd5e2173d38'),
     ('bb99e194-83a0-411e-9da6-42a00e8d000c', 'be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'ae21d318-8e57-4c07-9289-a6ed3cfdf711'),
     ('efc4d7f5-c970-4f1b-87ce-226690f197ee', 'be1d71f9-cdcd-4ecd-8fab-e799629c14e2', '25f57576-23c2-4a58-a0f3-a2f062531f8a');
+
+INSERT INTO favorites (id, user_id, recipe_id)
+VALUES
+    ('4f84854a-fa82-4b2a-bb9b-e64ad86ab334', 'be1d71f9-cdcd-4ecd-8fab-e799629c14e2', 'ade3c0a4-8e6e-427a-80d3-8e5466c96eb1');
