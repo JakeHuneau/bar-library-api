@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build docker image
-        run: docker build -t test_db test_db
+        run: docker build -t test_db tests/setup
       - name: Build the stack
-        run: docker-compose -f test_db/docker-compose.yml up -d
+        run: docker-compose -f tests/setup/docker-compose.yml up -d
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -41,6 +41,8 @@ jobs:
 
   clippy:
     name: Clippy
+    env:
+      SQLX_OFFLINE: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -58,6 +60,12 @@ jobs:
     name: Code coverage
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Build docker image
+        run: docker build -t test_db tests/setup
+      - name: Build the stack
+        run: docker-compose -f tests/setup/docker-compose.yml up -d
+
       - name: Checkout repository
         uses: actions/checkout@v2
 

@@ -1,6 +1,6 @@
-use actix_web::{HttpResponse, Responder};
+use actix_web::HttpResponse;
 
 #[tracing::instrument(name = "health check")]
-pub async fn health_check() -> impl Responder {
-    HttpResponse::Ok()
+pub async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }

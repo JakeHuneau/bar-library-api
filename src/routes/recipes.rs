@@ -245,7 +245,7 @@ pub async fn get_recipe_db(
 /// what they might want to buy for their bar.
 #[tracing::instrument(
     name = "Get recipes from ingredients",
-    skip(pool, form), 
+    skip(pool, form),
     fields(
         wildcard = %form.wildcard
     )

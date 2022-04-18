@@ -1,0 +1,347 @@
+{
+  "db": "PostgreSQL",
+  "08bb90de4e47077b9f88025adc905244b418377d1abf53869895fd2ce5add368": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Float4",
+          "Text",
+          "Bool"
+        ]
+      }
+    },
+    "query": "INSERT INTO recipe_ingredients (id, recipe_id, ingredient_id, quantity, unit, required)\n            VALUES ($1, $2, $3, $4, $5, $6)"
+  },
+  "1cb54f91bc56bc16e1f2d194818a98974e34cf51ea7bc0f2c9765949106fae36": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO recipes (id, name, directions) VALUES ($1, $2, $3)"
+  },
+  "1ea10ccf7a9e78b4965783a6e1fbdc4fecb94d8d728f864710144227bd891fdd": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT id FROM ingredients WHERE name = $1"
+  },
+  "2e87351bece8c5e60ef263a80bba6700fd92d1f08438dd289fa9c368a556a77a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "password",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT password FROM users WHERE name = $1 "
+  },
+  "444e19df975c492f317d34ce609fe849b41ac883cb1d1b35aa56da748d92bb49": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT * FROM ingredients"
+  },
+  "52a6d5349c837f86c16cf4dbd7f87e3b3abd6e3c8ec59b3afecdca22ac90a573": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM users WHERE name = $1"
+  },
+  "61851648f5851400afe63998da58db04e0bd375cc947636e522683e6d3d04f06": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE users SET password = $1 WHERE name = $2"
+  },
+  "6911ec348b46c1c4019b5c732f0a4a746e9577ca217090631bc61423f39bb366": {
+    "describe": {
+      "columns": [
+        {
+          "name": "recipe_name",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "directions",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "ingredient_name",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "quantity",
+          "ordinal": 3,
+          "type_info": "Float4"
+        },
+        {
+          "name": "unit",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "required",
+          "ordinal": 5,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT\n            recipes.name AS recipe_name,\n            recipes.directions AS directions,\n            ingredients.name as ingredient_name,\n            quantity,\n            unit,\n            required\n        FROM\n            recipes\n                JOIN recipe_ingredients ON recipes.id = recipe_ingredients.recipe_id\n                JOIN ingredients ON recipe_ingredients.ingredient_id = ingredients.id\n        WHERE recipes.name = $1\n        "
+  },
+  "83e4de43f4272d3e8c2ba2c305d56f7cee02bdf77a373557f15a43455c1aac19": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO favorites (id, user_id, recipe_id) VALUES ($1, $2, $3)"
+  },
+  "911558946d5038a71010eef3f57e3249486998c25a759fcbd6da84114cafc7e6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "DELETE FROM kitchen WHERE user_id = $1"
+  },
+  "bbe813a6888412a04b200016f740cec6981f28ffa6b70aa201354abbb581b4c2": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Varchar",
+          "Text",
+          "Int2",
+          "Timestamptz"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO users (id, name, password, email, permissions, joined_at)\n        VALUES ($1, $2, $3, $4, $5, $6)"
+  },
+  "c5ca8b6038a5085942137ffb7fea683b7ff5d7f2f8b32fbbdad7288538e3f287": {
+    "describe": {
+      "columns": [
+        {
+          "name": "permissions",
+          "ordinal": 0,
+          "type_info": "Int2"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT permissions FROM users WHERE id = $1\n    "
+  },
+  "c5fd787a6c893eedd93ff55dd7c02e29becc1adca3aa85317b1464924f503c54": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "ingredient",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT ingredients.id AS id, ingredients.name AS ingredient\n        FROM kitchen JOIN ingredients ON kitchen.ingredient_id = ingredients.id\n        WHERE user_id = $1\n    "
+  },
+  "cc485a710818f0f583f8eeecf332434ad87b52763d6e237488841d4bca67b3f9": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "DELETE FROM favorites WHERE user_id = $1 AND recipe_id = $2"
+  },
+  "cdfc723889fc7b2df079e9c388c6f2955f8b51cb632608c0aaaf858fb19fa8b1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n    SELECT\n        DISTINCT(recipes.name) AS name\n    FROM \n        recipes\n            JOIN recipe_ingredients ON recipes.id = recipe_ingredients.recipe_id\n            JOIN ingredients ON recipe_ingredients.ingredient_id = ingredients.id\n    WHERE ingredients.name = ANY($1)\n    "
+  },
+  "dcad4a52c750713b93c4bd8be259dc1b585f3e5a62d5e83d7737d63a7671ff3b": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int2",
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE users SET permissions = $1 WHERE name = $2"
+  },
+  "ed6a26ada774fcc3fb30b61f2d0afdc3d7889aff44566e47db5e5639d3ac1b28": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "INSERT INTO ingredients (id, name) VALUES ($1, $2)"
+  },
+  "f6eb2d235152317d7c12049bc0dae364fa08f0264b612b0b2947197d064257b5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM recipes WHERE name = $1"
+  },
+  "f75113cf13ba45e9c81f3d86920305beadf3929cc98598da205aa8ab7a589830": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO KITCHEN (id, user_id, ingredient_id) VALUES ($1, $2, $3)\n    "
+  }
+}
