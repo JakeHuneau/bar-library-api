@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build docker image
-        run: docker build -t test_db test_db
+        run: docker build -t test_db test/setup
       - name: Build the stack
-        run: docker-compose -f test_db/docker-compose.yml up -d
+        run: docker-compose -f test/setup/docker-compose.yml up -d
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
