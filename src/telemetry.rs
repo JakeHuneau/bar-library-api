@@ -15,7 +15,7 @@ where
 {
     let env_filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
-    let formatting_layer = BunyanFormattingLayer::new(name.into(), sink);
+    let formatting_layer = BunyanFormattingLayer::new(name, sink);
     Registry::default()
         .with(env_filter)
         .with(JsonStorageLayer)
@@ -67,8 +67,5 @@ impl TryFrom<String> for LogLevel {
 }
 
 pub fn get_log_level() -> String {
-    std::env::var("LOG_LEVEL")
-        .unwrap_or_else(|_| "local".into())
-        .try_into()
-        .expect("Failed to parse APP_ENVIRONMENT")
+    std::env::var("LOG_LEVEL").unwrap_or_else(|_| "local".into())
 }

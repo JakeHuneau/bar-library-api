@@ -58,6 +58,12 @@ jobs:
     name: Code coverage
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Build docker image
+        run: docker build -t test_db tests/setup
+      - name: Build the stack
+        run: docker-compose -f tests/setup/docker-compose.yml up -d
+
       - name: Checkout repository
         uses: actions/checkout@v2
 

@@ -8,17 +8,13 @@ use std::net::TcpListener;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Set up tracing
-    let subscriber = get_subscriber(
-        "barLibraryApi".into(),
-        get_log_level().into(),
-        std::io::stdout,
-    );
+    let subscriber = get_subscriber("barLibraryApi".into(), get_log_level(), std::io::stdout);
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to load configuration.");
     let connection_pool = PgPoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(&configuration.database.connection_string().expose_secret())
+        .connect_lazy(configuration.database.connection_string().expose_secret())
         .expect("Failed to create postgres connection pool.");
     let listener = TcpListener::bind(format!(
         "{}:{}",
