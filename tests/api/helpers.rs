@@ -64,7 +64,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres.");
-    sqlx::migrate!("./test_db/sql")
+    sqlx::migrate!("./tests/setup/sql")
         .run(&connection_pool)
         .await
         .expect("Failed to migrate the database");
