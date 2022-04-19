@@ -1,7 +1,6 @@
 use bar_library_api::configuration::get_configuration;
 use bar_library_api::startup::run;
 use bar_library_api::telemetry::{get_log_level, get_subscriber, init_subscriber};
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 
