@@ -15,3 +15,7 @@ Cargo.lock
 *.sqlite*
 
 local
+
+tmp/
+
+**/.DS_Store
