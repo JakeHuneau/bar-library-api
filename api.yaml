@@ -1,0 +1,404 @@
+openapi: 3.0.3
+info:
+  description: This an an API for the bar library web application
+  version: 1.0.0
+  title: Bar Library
+tags:
+  - name: health
+    description: Checks the health of the service
+  - name: favorites
+    description: Everything about a user's favorites
+  - name: ingredients
+    description: Everything about ingredients
+  - name: kitchen
+    description: Everything about a user's kitchen
+  - name: recipes
+    description: Everything about recipes
+  - name: users
+    description: Everything about users
+components:
+  schemas:
+    Favorite:
+      type: object
+      title: Favorite
+      description: A Favorite object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        recipeId:
+          type: string
+          format: uuid
+    Ingredient:
+      type: object
+      title: Ingredient
+      description: An Ingredient object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    IngredientData:
+      type: object
+      title: Ingredient Data
+      description: Details about how an ingredient is used in a recipe
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unit:
+          type: string
+        required:
+          type: boolean
+    Ingredients:
+      type: object
+      title: Ingredients
+      description: An array of Ingredients
+      properties:
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+    Kitchen:
+      type: object
+      title: Kitchen
+      description: A Kitchen object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        ingredients:
+          $ref: "#/components/schemas/Ingredients"
+    Recipe:
+      type: object
+      title: Recipe
+      description: Data for a recipe
+      properties:
+        name:
+          type: string
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngredientData"
+        directions:
+          type: string
+    RecipeCreateRequest:
+      type: object
+      title: Recipe Create Request
+      description: Request body for creating a new recipe
+      properties:
+        refererId:
+          type: string
+          format: uuid
+        recipe:
+          $ref: "#/components/schemas/Recipe"
+    RecipeDeleteRequest:
+      type: object
+      title: Recipe Delete Request
+      description: Request body for deleting a recipe
+      properties:
+        refererId:
+          type: string
+          format: uuid
+        name:
+          type: string
+    RecipeRequest:
+      type: object
+      title: Recipe Request
+      description: Request body for searchRecipes
+      properties:
+        ingredients:
+          type: array
+          items:
+            type: string
+        wildcard:
+          type: boolean
+    UserUpdatePermissionsRequest:
+      type: object
+      title: Update Permissions
+      description: Request body for updating a user's permissions
+      properties:
+        refererId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        canWrite:
+          type: boolean
+        canDelete:
+          type: boolean
+        canAlterUsers:
+          type: boolean
+paths:
+  "/health_check":
+    get:
+      tags:
+        - health
+      summary: Checks the health of the system
+      operationId: getHealth
+      responses:
+        "200":
+          description: Everything is good
+  "/ingredients":
+    get:
+      tags:
+        - ingredients
+      summary: Gets all ingredients
+      operationId: getIngredients
+      responses:
+        "200":
+          description: Saved new ingredient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ingredients"
+  "/favorites":
+    post:
+      tags:
+        - favorites
+      summary: Adds a new user favorite
+      operationId: createFavorite
+      requestBody:
+        description: New Favorite
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Favorite"
+      responses:
+        "200":
+          description: Saved new favorite
+    delete:
+      tags:
+        - favorites
+      summary: Deletes a favorite
+      operationId: deleteFavorite
+      requestBody:
+        description: Favorite
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Favorite"
+      responses:
+        "200":
+          description: Deleted a favorite
+  "/kitchen":
+    post:
+      tags:
+        - kitchen
+      summary: Updates a user's kitchen
+      operationId: updateKitchen
+      requestBody:
+        description: User Kitchen
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Kitchen"
+      responses:
+        "200":
+          description: Updated kitchen
+  "/kitchen/{userId}":
+    get:
+      tags:
+        - kitchen
+      summary: Gets a user's kitchen
+      operationId: getKitchen
+      parameters:
+        - in: path
+          name: userId
+          description: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User's kitchen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ingredients"
+  "/recipe":
+    post:
+      tags:
+        - recipes
+      summary: Finds recipes from a set of ingredients
+      operationId: searchRecipes
+      requestBody:
+        description: Recipe search request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeRequest"
+      responses:
+        "200":
+          description: Found recipes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+    delete:
+      tags:
+        - recipes
+      summary: Deletes a recipe
+      operationId: deleteRecipe
+      requestBody:
+        description: Recipe delete request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeDeleteRequest"
+      responses:
+        "200":
+          description: Recipe deleted
+  "/recipe/add_recipe":
+    post:
+      tags:
+        - recipes
+      summary: Adds a new recipe
+      operationId: createRecipe
+      requestBody:
+        description: New Recipe
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeCreateRequest"
+      responses:
+        "200":
+          description: Created recipe
+  "/recipe/{name}":
+    get:
+      tags:
+        - recipes
+      summary: Gets a recipe
+      operationId: getRecipe
+      parameters:
+        - in: path
+          name: name
+          description: Recipe name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: recipe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "404":
+          description: No recipes found
+  "/user":
+    delete:
+      tags:
+        - user
+      summary: Deletes a user
+      operationId: deleteUser
+      parameters:
+        - in: header
+          name: name
+          description: name of user to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted user
+  "/user/add_user":
+    post:
+      tags:
+        - user
+      summary: Adds a new user
+      operationId: createUser
+      parameters:
+        - in: header
+          name: email
+          description: New user's email
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: name
+          description: New user's username
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: password
+          description: New user's password
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Created new user
+  "/user/sign_in":
+    post:
+      tags:
+        - user
+      summary: Tries to sign in a user
+      operationId: login
+      parameters:
+        - in: header
+          name: name
+          description: username
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: password
+          description: password
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User successfully logged in
+        "401":
+          description: User did not successfully log in
+  "/user/update_permissions":
+    post:
+      tags:
+        - user
+      summary: Update a user's permissions
+      operationId: updateUserPermissions
+      requestBody:
+        description: Request body for updating user permissions
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdatePermissionsRequest"
+      responses:
+        "200":
+          description: User permissions updated
+  "/user/update_password":
+    post:
+      tags:
+        - user
+      summary: Update a user's password
+      operationId: updateUserPassword
+      parameters:
+        - in: header
+          name: name
+          description: username
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: password
+          description: password
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User password updated
