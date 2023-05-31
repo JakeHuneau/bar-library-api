@@ -18,12 +18,9 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
                     .route("", web::delete().to(remove_favorite)),
             )
             .service(
-                web::scope("/user")
-                    .route("/add_user", web::post().to(add_user))
-                    .route("/sign_in", web::post().to(sign_in))
-                    .route("/update_permissions", web::post().to(update_permissions))
-                    .route("/update_password", web::post().to(update_password))
-                    .route("/", web::delete().to(delete_user)),
+                web::scope("/kitchen")
+                    .route("/{user_id}", web::get().to(get_kitchen))
+                    .route("/", web::post().to(update_kitchen)),
             )
             .service(
                 web::scope("/recipe")
@@ -33,9 +30,12 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
                     .route("/", web::post().to(get_recipes)),
             )
             .service(
-                web::scope("/kitchen")
-                    .route("/{user_id}", web::get().to(get_kitchen))
-                    .route("/", web::post().to(update_kitchen)),
+                web::scope("/user")
+                    .route("/add_user", web::post().to(add_user))
+                    .route("/sign_in", web::post().to(sign_in))
+                    .route("/update_permissions", web::post().to(update_permissions))
+                    .route("/update_password", web::post().to(update_password))
+                    .route("/", web::delete().to(delete_user)),
             )
             .app_data(db_pool.clone())
     })
