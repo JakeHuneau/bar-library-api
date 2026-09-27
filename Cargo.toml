@@ -12,24 +12,24 @@ path = "src/main.rs"
 name = "bar_library_api"
 
 [dependencies]
-actix-web = "4.0.1"
-bcrypt = "0.12.1"
-config = "0.11"
-chrono = "0.4.15"
+actix-web = "4.3.1"
+bcrypt = "0.14.0"
+config = "0.13"
+chrono = "0.4.26"
 reqwest = "0.11"
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1", features = ["log"] }
-tracing-actix-web = "0.5"
+tracing-actix-web = "0.7.5"
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
-uuid = { version = "0.8.1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 
 [dependencies.sqlx]
-version = "0.5.7"
+version = "0.6"
 default-features = false
 features = [
     "runtime-actix-rustls",
